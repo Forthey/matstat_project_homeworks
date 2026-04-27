@@ -3,62 +3,82 @@
 Пусть
 \[
 a=\sqrt{3},\qquad
-K(x)=f(x)=\frac{1}{2a}\mathbf{1}_{\{|x|\le a\}}.
+f(x)=K(x)=\frac{1}{2a}\mathbf{1}_{\{|x|\le a\}}.
 \]
-Рассматривается ядерная оценка
+Здесь $f$ является плотностью равномерного распределения на $[-a,a]$, а
+$K$ берётся тем же прямоугольным ядром. Параметр сглаживания будем сразу
+обозначать через $\xi$, как в учебнике.
+
+Рассматривается ядерная оценка плотности
 \[
-\widehat f_h(x)=\frac{1}{nh}\sum_{i=1}^n
-K\left(\frac{x-X_i}{h}\right),
+\widehat f_\xi(x)=\frac{1}{n\xi}\sum_{i=1}^n
+K\left(\frac{x-X_i}{\xi}\right),
 \qquad X_i\sim U[-a,a].
 \]
-Обозначим
+Введём масштабированное ядро
 \[
-K_h(x)=\frac{1}{h}K\left(\frac{x}{h}\right)
-=\frac{1}{2ah}\mathbf{1}_{\{|x|\le ah\}}.
+K_\xi(x)=\frac{1}{\xi}K\left(\frac{x}{\xi}\right)
+=\frac{1}{2a\xi}\mathbf{1}_{\{|x|\le a\xi\}}.
 \]
-Тогда
+Тогда одно слагаемое в оценке имеет вид $K_\xi(x-X_i)$, а математическое
+ожидание оценки равно свёртке:
 \[
-\mathbb E\widehat f_h(x)=(K_h*f)(x),
+\mathbb E\widehat f_\xi(x)=(K_\xi*f)(x).
 \]
-и обычная интегральная среднеквадратическая ошибка равна
+
+ОИСКО определяется как математическое ожидание интегрального квадрата
+отклонения оценки от истинной плотности:
 \[
-\operatorname{MISE}(h,n)
+\bar{\delta}_n(\xi)
 =\mathbb E\int_{-\infty}^{\infty}
-\bigl(\widehat f_h(x)-f(x)\bigr)^2\,dx.
+\bigl(\widehat f_\xi(x)-f(x)\bigr)^2\,dx.
 \]
-Разложим её на дисперсионную часть и квадрат смещения:
+Для каждого фиксированного $x$ используем тождество
 \[
-\operatorname{MISE}(h,n)
-=\int_{-\infty}^{\infty}\operatorname{Var}\widehat f_h(x)\,dx
-+\int_{-\infty}^{\infty}
-\bigl(\mathbb E\widehat f_h(x)-f(x)\bigr)^2\,dx.
+\mathbb E(\widehat f_\xi(x)-f(x))^2
+=\operatorname{Var}\widehat f_\xi(x)
++\bigl(\mathbb E\widehat f_\xi(x)-f(x)\bigr)^2.
 \]
+После интегрирования по $x$ получаем разложение ОИСКО на дисперсионную
+часть и квадрат смещения:
+\[
+\bar{\delta}_n(\xi)
+=\int_{-\infty}^{\infty}\operatorname{Var}\widehat f_\xi(x)\,dx
++\int_{-\infty}^{\infty}
+\bigl((K_\xi*f)(x)-f(x)\bigr)^2\,dx.
+\]
+
+\section*{Дисперсионная часть}
 
 Для одного наблюдения положим
 \[
-Y_x=\frac{1}{h}K\left(\frac{x-X}{h}\right)=K_h(x-X).
+Y_x=K_\xi(x-X).
 \]
-Так как наблюдения независимы,
+Так как наблюдения независимы и одинаково распределены,
 \[
-\operatorname{Var}\widehat f_h(x)=\frac{1}{n}\operatorname{Var}Y_x.
+\operatorname{Var}\widehat f_\xi(x)
+=\frac{1}{n}\operatorname{Var}Y_x.
 \]
-Поэтому
+Следовательно,
 \[
-\int \operatorname{Var}\widehat f_h(x)\,dx
+\int \operatorname{Var}\widehat f_\xi(x)\,dx
 =\frac{1}{n}
 \left(
 \int \mathbb E Y_x^2\,dx
 -\int \bigl(\mathbb E Y_x\bigr)^2\,dx
 \right).
 \]
-Первое слагаемое упрощается по теореме Фубини:
+
+Первый интеграл упрощается заменой переменной $u=x-t$ и теоремой Фубини:
 \[
+\begin{aligned}
 \int \mathbb E Y_x^2\,dx
-=\int f(t)\int K_h^2(x-t)\,dx\,dt
-=\int K_h^2(u)\,du
-=\frac{1}{h}R(K),
+&=\int f(t)\int K_\xi^2(x-t)\,dx\,dt\\
+&=\int K_\xi^2(u)\,du
+=\frac{1}{\xi}\int K^2(u)\,du.
+\end{aligned}
 \]
-где
+Для прямоугольного ядра
 \[
 R(K)=\int K^2(u)\,du
 =\int_{-a}^{a}\frac{1}{4a^2}\,du
@@ -66,277 +86,314 @@ R(K)=\int K^2(u)\,du
 \]
 Кроме того,
 \[
-\mathbb E Y_x=(K_h*f)(x).
+\mathbb E Y_x=(K_\xi*f)(x).
 \]
-Следовательно,
+Поэтому дисперсионная часть равна
 \[
-\operatorname{MISE}(h,n)
+\int \operatorname{Var}\widehat f_\xi(x)\,dx
 =\frac{1}{n}
 \left(
-\frac{R(K)}{h}-\|K_h*f\|_2^2
-\right)
-+\|K_h*f-f\|_2^2.
+\frac{R(K)}{\xi}-\|K_\xi*f\|_2^2
+\right).
 \]
 
-Найдём свёртку. Она равна произведению высот двух прямоугольных плотностей
-на длину пересечения отрезков
+\section*{Свёртка прямоугольных плотностей}
+
+Найдём $(K_\xi*f)(x)$. Оба множителя под интегралом являются постоянными на
+своих носителях, поэтому свёртка равна произведению высот на длину
+пересечения отрезков
 \[
-[x-ah,x+ah]\quad\text{и}\quad[-a,a].
+[x-a\xi,x+a\xi]\quad\text{и}\quad[-a,a].
 \]
 То есть
 \[
-(K_h*f)(x)
-=\frac{1}{4a^2h}\,
-\ell(x),
-\]
-где
-\[
+(K_\xi*f)(x)
+=\frac{1}{4a^2\xi}\,\ell(x),
+\qquad
 \ell(x)=
-\operatorname{length}\left([x-ah,x+ah]\cap[-a,a]\right).
+\operatorname{length}\left([x-a\xi,x+a\xi]\cap[-a,a]\right).
 \]
-Свёртка двух равномерных плотностей имеет форму трапеции при $h\ne 1$
-и форму треугольника при $h=1$.
+Вид свёртки меняется в зависимости от того, какой из отрезков длиннее.
+Если $0<\xi\le 1$, сглаживающее окно короче носителя $f$, поэтому в центре
+свёртка совпадает с $f$. Если $\xi\ge 1$, появляется центральная площадка
+высоты $1/(2a\xi)$.
 
-Если $0<h\le 1$, то
+При $0<\xi\le 1$
 \[
-(K_h*f)(x)=
+(K_\xi*f)(x)=
 \begin{cases}
-\dfrac{1}{2a}, & |x|\le a(1-h),\\[6pt]
-\dfrac{a(1+h)-|x|}{4a^2h},
-& a(1-h)<|x|\le a(1+h),\\[6pt]
-0, & |x|>a(1+h).
+\dfrac{1}{2a}, & |x|\le a(1-\xi),\\[6pt]
+\dfrac{a(1+\xi)-|x|}{4a^2\xi},
+& a(1-\xi)<|x|\le a(1+\xi),\\[6pt]
+0, & |x|>a(1+\xi).
 \end{cases}
 \]
-Тогда, используя чётность,
+Используя чётность функции, получаем
 \[
 \begin{aligned}
-\|K_h*f\|_2^2
-&=2\int_0^{a(1-h)}\frac{1}{4a^2}\,dx
-+2\int_{a(1-h)}^{a(1+h)}
-\left(\frac{a(1+h)-x}{4a^2h}\right)^2 dx\\
-&=\frac{1-h}{2a}
-+\frac{1}{8a^4h^2}
-\int_{a(1-h)}^{a(1+h)}
-\bigl(a(1+h)-x\bigr)^2 dx\\
-&=\frac{1-h}{2a}
-+\frac{1}{8a^4h^2}\cdot\frac{(2ah)^3}{3}
-=\frac{3-h}{6a}.
+\|K_\xi*f\|_2^2
+&=2\int_0^{a(1-\xi)}\frac{1}{4a^2}\,dx
++2\int_{a(1-\xi)}^{a(1+\xi)}
+\left(\frac{a(1+\xi)-x}{4a^2\xi}\right)^2 dx\\
+&=\frac{1-\xi}{2a}
++\frac{1}{8a^4\xi^2}
+\int_{a(1-\xi)}^{a(1+\xi)}
+\bigl(a(1+\xi)-x\bigr)^2 dx\\
+&=\frac{1-\xi}{2a}
++\frac{1}{8a^4\xi^2}\cdot\frac{(2a\xi)^3}{3}
+=\frac{3-\xi}{6a}.
 \end{aligned}
 \]
-Если $h\ge 1$, то
+
+При $\xi\ge 1$
 \[
-(K_h*f)(x)=
+(K_\xi*f)(x)=
 \begin{cases}
-\dfrac{1}{2ah}, & |x|\le a(h-1),\\[6pt]
-\dfrac{a(1+h)-|x|}{4a^2h},
-& a(h-1)<|x|\le a(1+h),\\[6pt]
-0, & |x|>a(1+h).
+\dfrac{1}{2a\xi}, & |x|\le a(\xi-1),\\[6pt]
+\dfrac{a(1+\xi)-|x|}{4a^2\xi},
+& a(\xi-1)<|x|\le a(1+\xi),\\[6pt]
+0, & |x|>a(1+\xi).
 \end{cases}
 \]
 Аналогично,
 \[
 \begin{aligned}
-\|K_h*f\|_2^2
-&=2\int_0^{a(h-1)}\frac{1}{4a^2h^2}\,dx
-+2\int_{a(h-1)}^{a(1+h)}
-\left(\frac{a(1+h)-x}{4a^2h}\right)^2 dx\\
-&=\frac{h-1}{2ah^2}
-+\frac{1}{8a^4h^2}\cdot\frac{(2a)^3}{3}
-=\frac{3h-1}{6ah^2}.
+\|K_\xi*f\|_2^2
+&=2\int_0^{a(\xi-1)}\frac{1}{4a^2\xi^2}\,dx
++2\int_{a(\xi-1)}^{a(1+\xi)}
+\left(\frac{a(1+\xi)-x}{4a^2\xi}\right)^2 dx\\
+&=\frac{\xi-1}{2a\xi^2}
++\frac{1}{8a^4\xi^2}\cdot\frac{(2a)^3}{3}
+=\frac{3\xi-1}{6a\xi^2}.
 \end{aligned}
 \]
 Итак,
 \[
-\|K_h*f\|_2^2=
+\|K_\xi*f\|_2^2=
 \begin{cases}
-\dfrac{3-h}{6a}, & 0<h\le 1,\\[6pt]
-\dfrac{3h-1}{6ah^2}, & h\ge 1.
+\dfrac{3-\xi}{6a}, & 0<\xi\le 1,\\[6pt]
+\dfrac{3\xi-1}{6a\xi^2}, & \xi\ge 1.
 \end{cases}
 \]
 
-Теперь найдём квадрат смещения
-\[
-\|K_h*f-f\|_2^2.
-\]
-Так как $f(x)=1/(2a)$ при $|x|\le a$ и $f(x)=0$ вне этого отрезка,
-интегралы удобно считать отдельно на участках, где меняется вид свёртки.
+\section*{Квадрат смещения}
 
-При $0<h\le 1$ внутри отрезка $[-a(1-h),a(1-h)]$ свёртка совпадает с $f$.
-Отличие есть только в двух граничных слоях и двух внешних хвостах:
+Теперь вычислим
+\[
+\|K_\xi*f-f\|_2^2.
+\]
+Здесь приходится рассматривать три случая, потому что взаимное положение
+центральной площадки свёртки и носителя $f$ меняется при $\xi=1$ и
+$\xi=2$.
+
+При $0<\xi\le 1$ в центре отрезка $[-a(1-\xi),a(1-\xi)]$ свёртка совпадает
+с $f$. Ошибка возникает только в двух внутренних граничных слоях и двух
+внешних хвостах:
 \[
 \begin{aligned}
-\|K_h*f-f\|_2^2
-&=2\int_{a(1-h)}^{a}
+\|K_\xi*f-f\|_2^2
+&=2\int_{a(1-\xi)}^{a}
 \left(
-\frac{a(1+h)-x}{4a^2h}-\frac{1}{2a}
+\frac{a(1+\xi)-x}{4a^2\xi}-\frac{1}{2a}
 \right)^2 dx\\
 &\quad
-+2\int_{a}^{a(1+h)}
-\left(\frac{a(1+h)-x}{4a^2h}\right)^2 dx.
++2\int_{a}^{a(1+\xi)}
+\left(\frac{a(1+\xi)-x}{4a^2\xi}\right)^2 dx.
 \end{aligned}
 \]
-В первом интеграле числитель разности равен $a(1-h)-x$,
-а во втором линейная функция убывает от $1/(4a)$ до нуля. Поэтому
+В обоих интегралах после замены переменной получается один и тот же
+интеграл по отрезку длины $a\xi$:
 \[
-\|K_h*f-f\|_2^2
-=2\int_0^{ah}\left(\frac{u}{4a^2h}\right)^2du
-+2\int_0^{ah}\left(\frac{u}{4a^2h}\right)^2du
-=\frac{h}{12a}.
+\|K_\xi*f-f\|_2^2
+=2\int_0^{a\xi}\left(\frac{u}{4a^2\xi}\right)^2du
++2\int_0^{a\xi}\left(\frac{u}{4a^2\xi}\right)^2du
+=\frac{\xi}{12a}.
 \]
 
-При $1<h\le 2$ свёртка имеет постоянный участок
-$|x|\le a(h-1)$, который лежит внутри носителя $f$.
-По чётности
+При $1<\xi\le 2$ центральная площадка свёртки
+$|x|\le a(\xi-1)$ лежит внутри носителя $f$. Поэтому квадрат смещения
+состоит из вклада центральной площадки, наклонной части внутри носителя и
+внешнего хвоста:
 \[
 \begin{aligned}
-\|K_h*f-f\|_2^2
-&=2\int_0^{a(h-1)}
-\left(\frac{1}{2ah}-\frac{1}{2a}\right)^2dx\\
+\|K_\xi*f-f\|_2^2
+&=2\int_0^{a(\xi-1)}
+\left(\frac{1}{2a\xi}-\frac{1}{2a}\right)^2dx\\
 &\quad
-+2\int_{a(h-1)}^{a}
++2\int_{a(\xi-1)}^{a}
 \left(
-\frac{a(1+h)-x}{4a^2h}-\frac{1}{2a}
+\frac{a(1+\xi)-x}{4a^2\xi}-\frac{1}{2a}
 \right)^2dx\\
 &\quad
-+2\int_a^{a(1+h)}
-\left(\frac{a(1+h)-x}{4a^2h}\right)^2dx.
++2\int_a^{a(1+\xi)}
+\left(\frac{a(1+\xi)-x}{4a^2\xi}\right)^2dx.
 \end{aligned}
 \]
-После вычисления этих элементарных интегралов получаем
+После вычисления элементарных интегралов:
 \[
-\|K_h*f-f\|_2^2
-=\frac{3h^3-6h^2+6h-2}{12ah^2},
-\qquad 1<h\le 2.
+\|K_\xi*f-f\|_2^2
+=\frac{3\xi^3-6\xi^2+6\xi-2}{12a\xi^2},
+\qquad 1<\xi\le 2.
 \]
 
-При $h\ge 2$ весь носитель $f$ лежит внутри постоянного участка свёртки.
-Поэтому
+При $\xi\ge 2$ весь носитель $f$ лежит внутри центральной площадки
+свёртки, а вне носителя $f$ остаются ещё постоянные участки свёртки и
+наклонные хвосты. Поэтому
 \[
 \begin{aligned}
-\|K_h*f-f\|_2^2
+\|K_\xi*f-f\|_2^2
 &=2\int_0^a
-\left(\frac{1}{2ah}-\frac{1}{2a}\right)^2dx\\
- +2\int_a^{a(h-1)}
-\left(\frac{1}{2ah}\right)^2dx\\
+\left(\frac{1}{2a\xi}-\frac{1}{2a}\right)^2dx\\
 &\quad
-+2\int_{a(h-1)}^{a(1+h)}
-\left(\frac{a(1+h)-x}{4a^2h}\right)^2dx\\
-&=\frac{3h^2-3h-1}{6ah^2}.
++2\int_a^{a(\xi-1)}
+\left(\frac{1}{2a\xi}\right)^2dx\\
+&\quad
++2\int_{a(\xi-1)}^{a(1+\xi)}
+\left(\frac{a(1+\xi)-x}{4a^2\xi}\right)^2dx\\
+&=\frac{3\xi^2-3\xi-1}{6a\xi^2}.
 \end{aligned}
 \]
 Следовательно,
 \[
-\|K_h*f-f\|_2^2=
+\|K_\xi*f-f\|_2^2=
 \begin{cases}
-\dfrac{h}{12a}, & 0<h\le 1,\\[6pt]
-\dfrac{3h^3-6h^2+6h-2}{12ah^2}, & 1<h\le 2,\\[6pt]
-\dfrac{3h^2-3h-1}{6ah^2}, & h\ge 2.
+\dfrac{\xi}{12a}, & 0<\xi\le 1,\\[6pt]
+\dfrac{3\xi^3-6\xi^2+6\xi-2}{12a\xi^2}, & 1<\xi\le 2,\\[6pt]
+\dfrac{3\xi^2-3\xi-1}{6a\xi^2}, & \xi\ge 2.
 \end{cases}
 \]
 
-Подставим найденные выражения в формулу для ОИСКО. Для $0<h\le 1$
+\section*{Итоговая формула для ОИСКО}
+
+Собираем дисперсионную часть и квадрат смещения. Для $0<\xi\le 1$
 \[
-\frac{R(K)}{h}-\|K_h*f\|_2^2
-=\frac{1}{2ah}-\frac{3-h}{6a}.
+\frac{R(K)}{\xi}-\|K_\xi*f\|_2^2
+=\frac{1}{2a\xi}-\frac{3-\xi}{6a}.
 \]
-Для $h\ge 1$
+Для $\xi\ge 1$
 \[
-\frac{R(K)}{h}-\|K_h*f\|_2^2
-=\frac{1}{2ah}-\frac{3h-1}{6ah^2}
-=\frac{1}{6ah^2}.
+\frac{R(K)}{\xi}-\|K_\xi*f\|_2^2
+=\frac{1}{2a\xi}-\frac{3\xi-1}{6a\xi^2}
+=\frac{1}{6a\xi^2}.
 \]
-Итоговая формула имеет вид
+Значит,
 \[
-\operatorname{MISE}(h,n)=
+\bar{\delta}_n(\xi)=
 \begin{cases}
-\dfrac{h}{12a}
+\dfrac{\xi}{12a}
 +
-\dfrac{1}{n}\left(\dfrac{1}{2ah}-\dfrac{3-h}{6a}\right),
-& 0<h\le 1,\\[10pt]
-\dfrac{3h^3-6h^2+6h-2}{12ah^2}
+\dfrac{1}{n}\left(\dfrac{1}{2a\xi}-\dfrac{3-\xi}{6a}\right),
+& 0<\xi\le 1,\\[10pt]
+\dfrac{3\xi^3-6\xi^2+6\xi-2}{12a\xi^2}
 +
-\dfrac{1}{n}\cdot\dfrac{1}{6ah^2},
-& 1<h\le 2,\\[10pt]
-\dfrac{3h^2-3h-1}{6ah^2}
+\dfrac{1}{n}\cdot\dfrac{1}{6a\xi^2},
+& 1<\xi\le 2,\\[10pt]
+\dfrac{3\xi^2-3\xi-1}{6a\xi^2}
 +
-\dfrac{1}{n}\cdot\dfrac{1}{6ah^2},
-& h\ge 2,
+\dfrac{1}{n}\cdot\dfrac{1}{6a\xi^2},
+& \xi\ge 2,
 \end{cases}
 \qquad a=\sqrt{3}.
 \]
 
-Проверим согласованность формулы. В точке $h=1$ первая и вторая ветви дают
+Проверим согласованность формулы. В точке $\xi=1$ первая и вторая ветви
+дают
 \[
 \frac{1}{12a}+\frac{1}{6an}.
 \]
-В точке $h=2$ вторая и третья ветви дают
+В точке $\xi=2$ вторая и третья ветви дают
 \[
 \frac{5}{24a}+\frac{1}{24an}.
 \]
-Значит, $\operatorname{MISE}(h,n)$ непрерывна при $h=1$ и $h=2$.
+Значит, $\bar{\delta}_n(\xi)$ непрерывна при $\xi=1$ и $\xi=2$.
 Кроме того,
 \[
-h\to 0+:\qquad
-\operatorname{MISE}(h,n)\sim \frac{1}{2anh}\to\infty,
+\xi\to 0+:\qquad
+\bar{\delta}_n(\xi)\sim \frac{1}{2an\xi}\to\infty,
 \]
-а при $h\to\infty$
+то есть слишком малое окно даёт большой дисперсионный вклад. При
+$\xi\to\infty$
 \[
-\operatorname{MISE}(h,n)\to\frac{1}{2a}
+\bar{\delta}_n(\xi)\to\frac{1}{2a}
 =\int_{-\infty}^{\infty}f^2(x)\,dx
-=\frac{1}{2\sqrt{3}}.
+=\frac{1}{2\sqrt{3}},
 \]
+что соответствует чрезмерному сглаживанию: оценка становится слишком
+широкой и плохо приближает исходную плотность.
 
-\section*{Графическая иллюстрация результатов}
+\section*{Оптимальный параметр и минимальная ОИСКО}
 
-Для графиков положим $\xi=h$ и используем полученную выше кусочно-заданную
-формулу для $\operatorname{MISE}(h,n)$ без дополнительных аппроксимаций.
-Нормированную ошибку обозначим через
+Оптимальный параметр определяется из условия минимума:
 \[
-\Delta(h,n)=\frac{\operatorname{MISE}(h,n)}{\int f^2(x)\,dx}
-=2\sqrt{3}\,\operatorname{MISE}(h,n),
-\]
-а эффективность определим как
-\[
-E(\xi)=\frac{\Delta_{\min}(400)}{\Delta(\xi,400)},
+\xi_{\mathrm{opt}}(n)=\arg\min_{\xi>0}\bar{\delta}_n(\xi),
 \qquad
-\Delta_{\min}(400)=\min_h \Delta(h,400).
+\bar{\delta}_{n,\min}=\bar{\delta}_n(\xi_{\mathrm{opt}}).
 \]
+Для рассматриваемого значения $n=400$ минимум находится в первой ветви.
+Дифференцируя первую ветвь по $\xi$, получаем
+\[
+\frac{d}{d\xi}\bar{\delta}_n(\xi)
+=\frac{1}{12a}+\frac{1}{6an}
+-\frac{1}{2an\xi^2}.
+\]
+Из условия равенства производной нулю следует
+\[
+\xi_{\mathrm{opt}}(n)=\sqrt{\frac{6}{n+2}}.
+\]
+При $n=400$
+\[
+\xi_{\mathrm{opt}}(400)=\sqrt{\frac{6}{402}}\approx 0.122,
+\qquad
+\bar{\delta}_{400,\min}\approx 0.0111.
+\]
+
+Эффективность параметра $\xi$ определим отношением
+\[
+e_n(\xi)=\frac{\bar{\delta}_{n,\min}}{\bar{\delta}_n(\xi)},
+\qquad 0<e_n(\xi)\le 1.
+\]
+Максимальное значение эффективности равно $1$ и достигается при
+$\xi=\xi_{\mathrm{opt}}(n)$.
+
+\section*{Графическая иллюстрация}
+
+Основные графики построены для $n=400$ по формуле
+$\bar{\delta}_n(\xi)$ без дополнительных аппроксимаций.
 
 \begin{figure}[H]
 \centering
-\plotplaceholder[0.82\textwidth]{plots/mise_delta_n400.png}
-\caption{График $\delta(\xi)=\operatorname{MISE}(h,400)$, построенный по аналитической формуле для прямоугольного ядра.}
+\plotplaceholder[0.82\textwidth]{plots/delta_bar_n400.png}
+\caption{График ОИСКО $\bar{\delta}_{400}(\xi)$, построенный по аналитической формуле для прямоугольного ядра.}
 \end{figure}
 
-При малых $\xi=h$ ошибка быстро растёт из-за дисперсионного члена
-$\sim (2anh)^{-1}$, а при больших $h$ кривая приближается к пределу
+При малых $\xi$ ошибка быстро растёт из-за дисперсионного члена
+$\sim (2an\xi)^{-1}$, а при больших $\xi$ кривая приближается к пределу
 $1/(2\sqrt{3})$.
 
 \begin{figure}[H]
 \centering
-\plotplaceholder[0.82\textwidth]{plots/optimal_h_vs_n.png}
-\caption{Оптимальная ширина окна $h_{\mathrm{opt}}(n)$, численно найденная из минимума аналитической функции $\operatorname{MISE}(h,n)$.}
+\plotplaceholder[0.82\textwidth]{plots/efficiency_en_n400.png}
+\caption{Эффективность $e_{400}(\xi)=\bar{\delta}_{400,\min}/\bar{\delta}_{400}(\xi)$ с максимумом, равным $1$.}
 \end{figure}
 
-По мере роста объёма выборки оптимальное значение $h$ убывает, поскольку
+Эффективность максимальна вблизи оптимального значения $\xi$ и убывает как
+при слишком малых, так и при слишком больших значениях параметра.
+
+\begin{figure}[H]
+\centering
+\plotplaceholder[0.82\textwidth]{plots/xi_opt_vs_n.png}
+\caption{Дополнительно: зависимость $\xi_{\mathrm{opt}}(n)$ от размера выборки $n$.}
+\end{figure}
+
+По мере роста объёма выборки оптимальное значение $\xi$ убывает, поскольку
 для больших $n$ можно использовать более узкое окно без сильного штрафа по
 дисперсии.
 
 \begin{figure}[H]
 \centering
-\plotplaceholder[0.82\textwidth]{plots/min_mise_vs_n.png}
-\caption{Зависимость $\min_h \operatorname{MISE}(h,n)$ от размера выборки $n$ для той же аналитической формулы.}
+\plotplaceholder[0.82\textwidth]{plots/delta_min_vs_n.png}
+\caption{Дополнительно: зависимость $\bar{\delta}_{n,\min}$ от размера выборки $n$.}
 \end{figure}
 
-Нижняя граница ошибки по $n$ монотонно убывает: увеличение выборки улучшает
-наилучшее достижимое качество оценки.
-
-\begin{figure}[H]
-\centering
-\plotplaceholder[0.82\textwidth]{plots/efficiency_n400.png}
-\caption{Эффективность $E(\xi)=\Delta_{\min}(400)/\Delta(\xi,400)$ при $n=400$.}
-\end{figure}
-
-Эффективность максимальна вблизи оптимального значения $h$ и убывает как при
-слишком малых, так и при слишком больших $\xi$, что напрямую отражает форму
-аналитической зависимости $\operatorname{MISE}(h,n)$.
+Минимальная ОИСКО монотонно убывает: увеличение выборки улучшает наилучшее
+достижимое качество оценки.
