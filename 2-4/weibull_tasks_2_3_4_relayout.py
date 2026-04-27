@@ -2,6 +2,10 @@ from __future__ import annotations
 
 from pathlib import Path
 import math
+import os
+
+os.environ.setdefault("MPLCONFIGDIR", "/tmp/matplotlib-cache")
+
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -15,10 +19,18 @@ M_GROUPS_HIST = [
     [5, 10, 15, 20, 25],
     [10, 20, 30, 40],
 ]
-N_VALUES_PROJ = list(range(10, 101, 10))
-N_VALUES_PROJ_SHOW = [10, 20, 30, 50, 100]
-H_VALUES_KDE = np.arange(0.05, 1.01, 0.05)
-H_VALUES_KDE_SHOW = [0.05, 0.10, 0.20, 0.50]
+N_VALUES_PROJ = sorted(set(list(range(10, 101, 10)) + list(range(35, 66))))
+N_VALUES_PROJ_SHOW = [10, 30, 45, 50, 55, 100]
+H_VALUES_KDE = np.array(
+    sorted(
+        set(
+            [round(float(h), 3) for h in np.arange(0.02, 0.201, 0.005)]
+            + [round(float(h), 3) for h in np.arange(0.25, 1.01, 0.05)]
+            + [1.25, 1.50, 2.00, 3.00, 5.00, 10.00, 20.00]
+        )
+    )
+)
+H_VALUES_KDE_SHOW = [0.05, 0.10, 0.20, 1.00]
 
 R_HIST = 1000
 R_PROJ = 1000
@@ -33,6 +45,8 @@ DX_KDE = 0.005
 BASE_DIR = Path(__file__).resolve().parent
 PLOTS_DIR = BASE_DIR / "plots"
 RESULTS_FILE = BASE_DIR / "results_tasks_2_3_4_relayout.txt"
+
+F_L2_NORM_SQ = 3.0 * 2.0 ** (-5.0 / 3.0) * math.gamma(5.0 / 3.0)
 
 
 plt.rcParams.update(
@@ -107,7 +121,7 @@ def compute_histogram_stats() -> tuple[dict[int, float], dict[int, float]]:
         vals = np.empty(R_HIST)
         for i in range(R_HIST):
             sample = sample_weibull_inverse_transform(N_SAMPLE, rng=rng)
-            vals[i] = histogram_ise(sample, m)
+            vals[i] = histogram_ise(sample, m) / F_L2_NORM_SQ
         mean_vals[m] = float(vals.mean())
         std_vals[m] = float(vals.std(ddof=1))
 
@@ -194,9 +208,9 @@ def plot_histogram_delta(hist_mean: dict[int, float], output_path: Path) -> None
     plt.figure(figsize=(8.5, 4.8))
     plt.plot(ms, ys, marker="o", linewidth=2, color="#1f77b4")
     plt.scatter([best_m], [hist_mean[best_m]], color="green", s=80, zorder=3, label=f"Минимум при m={best_m}")
-    plt.title("Зависимость ОИСКО от числа разрядов m")
+    plt.title("Зависимость нормированной ОИСКО от числа разрядов m")
     plt.xlabel("Число разрядов m")
-    plt.ylabel(r"$\overline{\delta_n}(m)$")
+    plt.ylabel(r"$\overline{\Delta_n}(m)$")
     plt.legend(loc="upper right")
     plt.tight_layout()
     plt.savefig(output_path, dpi=180, bbox_inches="tight")
@@ -234,10 +248,11 @@ def laguerre_basis_matrix(x: np.ndarray, N: int) -> np.ndarray:
 def compute_projection_stats() -> tuple[dict[int, float], dict[int, float]]:
     x_int = np.linspace(0.0, L_PROJ_INT, 200001)
     dx_int = x_int[1] - x_int[0]
-    phi_true_grid = laguerre_basis_matrix(x_int, 100)
+    max_N = max(N_VALUES_PROJ)
+    phi_true_grid = laguerre_basis_matrix(x_int, max_N)
     f_true_grid = weibull_pdf(x_int)
     c_true = phi_true_grid.dot(f_true_grid) * dx_int
-    f_l2_norm_sq = float(np.sum(f_true_grid**2) * dx_int)
+    f_l2_norm_sq = F_L2_NORM_SQ
     cum_energy = np.cumsum(c_true**2)
     tail_energy = {N: float(f_l2_norm_sq - cum_energy[N]) for N in N_VALUES_PROJ}
 
@@ -252,7 +267,7 @@ def compute_projection_stats() -> tuple[dict[int, float], dict[int, float]]:
         for i in range(R_PROJ):
             sample = sample_weibull_inverse_transform(N_SAMPLE, rng=rng)
             c_hat = laguerre_basis_matrix(sample, N).mean(axis=1)
-            vals[i] = float(np.sum((c_hat - true_coeffs) ** 2) + tail)
+            vals[i] = float(np.sum((c_hat - true_coeffs) ** 2) + tail) / F_L2_NORM_SQ
         mean_vals[N] = float(vals.mean())
         std_vals[N] = float(vals.std(ddof=1))
 
@@ -332,9 +347,9 @@ def plot_projection_delta(proj_mean: dict[int, float], output_path: Path) -> Non
     plt.figure(figsize=(8.5, 4.8))
     plt.plot(xs, ys, marker="o", linewidth=2, color="purple")
     plt.scatter([best_N], [proj_mean[best_N]], color="green", s=80, zorder=3, label=f"Минимум при N={best_N}")
-    plt.title(r"Зависимость $\overline{\delta_n}(N)$ от числа членов разложения N")
+    plt.title(r"Зависимость $\overline{\Delta_n}(N)$ от числа членов разложения N")
     plt.xlabel("Число членов разложения N")
-    plt.ylabel(r"$\overline{\delta_n}(N)$")
+    plt.ylabel(r"$\overline{\Delta_n}(N)$")
     plt.legend(loc="upper right")
     plt.tight_layout()
     plt.savefig(output_path, dpi=180, bbox_inches="tight")
@@ -401,7 +416,7 @@ def compute_kde_stats() -> tuple[dict[float, float], dict[float, float]]:
         vals = np.empty(R_KDE)
         for i in range(R_KDE):
             sample = sample_weibull_inverse_transform(N_SAMPLE, rng=rng)
-            vals[i] = kde_ise(sample, float(h))
+            vals[i] = kde_ise(sample, float(h)) / F_L2_NORM_SQ
         hk = round(float(h), 3)
         mean_vals[hk] = float(vals.mean())
         std_vals[hk] = float(vals.std(ddof=1))
@@ -461,9 +476,11 @@ def plot_kde_delta(kde_mean: dict[float, float], output_path: Path) -> None:
     plt.figure(figsize=(8.5, 4.8))
     plt.plot(xs, ys, marker="o", linewidth=2, color="purple")
     plt.scatter([best_h], [kde_mean[best_h]], color="green", s=80, zorder=3, label=f"Минимум при h={best_h:.2f}")
-    plt.title(r"Зависимость $\overline{\delta_n}(h)$ от ширины окна h")
+    plt.axhline(1.0, color="#555555", linestyle=":", linewidth=1.6, label="Асимптота 1")
+    plt.xscale("log")
+    plt.title(r"Зависимость $\overline{\Delta_n}(h)$ от ширины окна h")
     plt.xlabel("Ширина окна h")
-    plt.ylabel(r"$\overline{\delta_n}(h)$")
+    plt.ylabel(r"$\overline{\Delta_n}(h)$")
     plt.legend(loc="upper right")
     plt.tight_layout()
     plt.savefig(output_path, dpi=180, bbox_inches="tight")
@@ -482,20 +499,35 @@ def write_results_file(
     kde_std: dict[float, float],
 ) -> None:
     lines: list[str] = []
+    ci_hist = {m: 1.96 * hist_std[m] / math.sqrt(R_HIST) for m in M_VALUES_HIST}
+    ci_proj = {N: 1.96 * proj_std[N] / math.sqrt(R_PROJ) for N in N_VALUES_PROJ}
+    ci_kde = {h: 1.96 * kde_std[h] / math.sqrt(R_KDE) for h in sorted(kde_mean.keys())}
 
-    lines.append("Задача 2. Средние значения delta_bar_n(m)")
+    best_m = min(hist_mean, key=hist_mean.get)
+    best_N = min(proj_mean, key=proj_mean.get)
+    best_h = min(kde_mean, key=kde_mean.get)
+
+    lines.append(f"int f^2 dx = {F_L2_NORM_SQ:.12f}")
+    lines.append("")
+    lines.append("Задача 2. Средние значения нормированной Delta_bar_n(m)")
     for m in M_VALUES_HIST:
-        lines.append(f"m={m:2d}: mean={hist_mean[m]:.6f}, std={hist_std[m]:.6f}")
+        lines.append(f"m={m:2d}: mean={hist_mean[m]:.6f}, std={hist_std[m]:.6f}, ci95=±{ci_hist[m]:.6f}")
 
     lines.append("")
-    lines.append("Задача 3. Средние значения delta_bar_n(N)")
+    lines.append("Задача 3. Средние значения нормированной Delta_bar_n(N)")
     for N in N_VALUES_PROJ:
-        lines.append(f"N={N:3d}: mean={proj_mean[N]:.6f}, std={proj_std[N]:.6f}")
+        lines.append(f"N={N:3d}: mean={proj_mean[N]:.6f}, std={proj_std[N]:.6f}, ci95=±{ci_proj[N]:.6f}")
 
     lines.append("")
-    lines.append("Задача 4. Средние значения delta_bar_n(h)")
+    lines.append("Задача 4. Средние значения нормированной Delta_bar_n(h)")
     for h in sorted(kde_mean.keys()):
-        lines.append(f"h={h:>4.2f}: mean={kde_mean[h]:.6f}, std={kde_std[h]:.6f}")
+        lines.append(f"h={h:>5.3f}: mean={kde_mean[h]:.6f}, std={kde_std[h]:.6f}, ci95=±{ci_kde[h]:.6f}")
+
+    lines.append("")
+    lines.append("Лучшие оценки")
+    lines.append(f"histogram: m={best_m}, mean={hist_mean[best_m]:.6f}, ci95=±{ci_hist[best_m]:.6f}")
+    lines.append(f"projection: N={best_N}, mean={proj_mean[best_N]:.6f}, ci95=±{ci_proj[best_N]:.6f}")
+    lines.append(f"kde: h={best_h:.3f}, mean={kde_mean[best_h]:.6f}, ci95=±{ci_kde[best_h]:.6f}")
 
     RESULTS_FILE.write_text("\n".join(lines), encoding="utf-8")
 

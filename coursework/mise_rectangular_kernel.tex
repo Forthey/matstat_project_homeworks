@@ -1,0 +1,287 @@
+\section*{Аналитический расчёт ОИСКО для прямоугольного ядра}
+
+Пусть
+\[
+a=\sqrt{3},\qquad
+K(x)=f(x)=\frac{1}{2a}\mathbf{1}_{\{|x|\le a\}}.
+\]
+Рассматривается ядерная оценка
+\[
+\widehat f_h(x)=\frac{1}{nh}\sum_{i=1}^n
+K\left(\frac{x-X_i}{h}\right),
+\qquad X_i\sim U[-a,a].
+\]
+Обозначим
+\[
+K_h(x)=\frac{1}{h}K\left(\frac{x}{h}\right)
+=\frac{1}{2ah}\mathbf{1}_{\{|x|\le ah\}}.
+\]
+Тогда
+\[
+\mathbb E\widehat f_h(x)=(K_h*f)(x),
+\]
+и обычная интегральная среднеквадратическая ошибка равна
+\[
+\operatorname{MISE}(h,n)
+=\mathbb E\int_{-\infty}^{\infty}
+\bigl(\widehat f_h(x)-f(x)\bigr)^2\,dx.
+\]
+Разложим её на дисперсионную часть и квадрат смещения:
+\[
+\operatorname{MISE}(h,n)
+=\int_{-\infty}^{\infty}\operatorname{Var}\widehat f_h(x)\,dx
++\int_{-\infty}^{\infty}
+\bigl(\mathbb E\widehat f_h(x)-f(x)\bigr)^2\,dx.
+\]
+
+Для одного наблюдения положим
+\[
+Y_x=\frac{1}{h}K\left(\frac{x-X}{h}\right)=K_h(x-X).
+\]
+Так как наблюдения независимы,
+\[
+\operatorname{Var}\widehat f_h(x)=\frac{1}{n}\operatorname{Var}Y_x.
+\]
+Поэтому
+\[
+\int \operatorname{Var}\widehat f_h(x)\,dx
+=\frac{1}{n}
+\left(
+\int \mathbb E Y_x^2\,dx
+-\int \bigl(\mathbb E Y_x\bigr)^2\,dx
+\right).
+\]
+Первое слагаемое упрощается по теореме Фубини:
+\[
+\int \mathbb E Y_x^2\,dx
+=\int f(t)\int K_h^2(x-t)\,dx\,dt
+=\int K_h^2(u)\,du
+=\frac{1}{h}R(K),
+\]
+где
+\[
+R(K)=\int K^2(u)\,du
+=\int_{-a}^{a}\frac{1}{4a^2}\,du
+=\frac{1}{2a}.
+\]
+Кроме того,
+\[
+\mathbb E Y_x=(K_h*f)(x).
+\]
+Следовательно,
+\[
+\operatorname{MISE}(h,n)
+=\frac{1}{n}
+\left(
+\frac{R(K)}{h}-\|K_h*f\|_2^2
+\right)
++\|K_h*f-f\|_2^2.
+\]
+
+Найдём свёртку. Она равна произведению высот двух прямоугольных плотностей
+на длину пересечения отрезков
+\[
+[x-ah,x+ah]\quad\text{и}\quad[-a,a].
+\]
+То есть
+\[
+(K_h*f)(x)
+=\frac{1}{4a^2h}\,
+\ell(x),
+\]
+где
+\[
+\ell(x)=
+\operatorname{length}\left([x-ah,x+ah]\cap[-a,a]\right).
+\]
+Свёртка двух равномерных плотностей имеет форму трапеции при $h\ne 1$
+и форму треугольника при $h=1$.
+
+Если $0<h\le 1$, то
+\[
+(K_h*f)(x)=
+\begin{cases}
+\dfrac{1}{2a}, & |x|\le a(1-h),\\[6pt]
+\dfrac{a(1+h)-|x|}{4a^2h},
+& a(1-h)<|x|\le a(1+h),\\[6pt]
+0, & |x|>a(1+h).
+\end{cases}
+\]
+Тогда, используя чётность,
+\[
+\begin{aligned}
+\|K_h*f\|_2^2
+&=2\int_0^{a(1-h)}\frac{1}{4a^2}\,dx
++2\int_{a(1-h)}^{a(1+h)}
+\left(\frac{a(1+h)-x}{4a^2h}\right)^2 dx\\
+&=\frac{1-h}{2a}
++\frac{1}{8a^4h^2}
+\int_{a(1-h)}^{a(1+h)}
+\bigl(a(1+h)-x\bigr)^2 dx\\
+&=\frac{1-h}{2a}
++\frac{1}{8a^4h^2}\cdot\frac{(2ah)^3}{3}
+=\frac{3-h}{6a}.
+\end{aligned}
+\]
+Если $h\ge 1$, то
+\[
+(K_h*f)(x)=
+\begin{cases}
+\dfrac{1}{2ah}, & |x|\le a(h-1),\\[6pt]
+\dfrac{a(1+h)-|x|}{4a^2h},
+& a(h-1)<|x|\le a(1+h),\\[6pt]
+0, & |x|>a(1+h).
+\end{cases}
+\]
+Аналогично,
+\[
+\begin{aligned}
+\|K_h*f\|_2^2
+&=2\int_0^{a(h-1)}\frac{1}{4a^2h^2}\,dx
++2\int_{a(h-1)}^{a(1+h)}
+\left(\frac{a(1+h)-x}{4a^2h}\right)^2 dx\\
+&=\frac{h-1}{2ah^2}
++\frac{1}{8a^4h^2}\cdot\frac{(2a)^3}{3}
+=\frac{3h-1}{6ah^2}.
+\end{aligned}
+\]
+Итак,
+\[
+\|K_h*f\|_2^2=
+\begin{cases}
+\dfrac{3-h}{6a}, & 0<h\le 1,\\[6pt]
+\dfrac{3h-1}{6ah^2}, & h\ge 1.
+\end{cases}
+\]
+
+Теперь найдём квадрат смещения
+\[
+\|K_h*f-f\|_2^2.
+\]
+Так как $f(x)=1/(2a)$ при $|x|\le a$ и $f(x)=0$ вне этого отрезка,
+интегралы удобно считать отдельно на участках, где меняется вид свёртки.
+
+При $0<h\le 1$ внутри отрезка $[-a(1-h),a(1-h)]$ свёртка совпадает с $f$.
+Отличие есть только в двух граничных слоях и двух внешних хвостах:
+\[
+\begin{aligned}
+\|K_h*f-f\|_2^2
+&=2\int_{a(1-h)}^{a}
+\left(
+\frac{a(1+h)-x}{4a^2h}-\frac{1}{2a}
+\right)^2 dx\\
+&\quad
++2\int_{a}^{a(1+h)}
+\left(\frac{a(1+h)-x}{4a^2h}\right)^2 dx.
+\end{aligned}
+\]
+В первом интеграле числитель разности равен $a(1-h)-x$,
+а во втором линейная функция убывает от $1/(4a)$ до нуля. Поэтому
+\[
+\|K_h*f-f\|_2^2
+=2\int_0^{ah}\left(\frac{u}{4a^2h}\right)^2du
++2\int_0^{ah}\left(\frac{u}{4a^2h}\right)^2du
+=\frac{h}{12a}.
+\]
+
+При $1<h\le 2$ свёртка имеет постоянный участок
+$|x|\le a(h-1)$, который лежит внутри носителя $f$.
+По чётности
+\[
+\begin{aligned}
+\|K_h*f-f\|_2^2
+&=2\int_0^{a(h-1)}
+\left(\frac{1}{2ah}-\frac{1}{2a}\right)^2dx\\
+&\quad
++2\int_{a(h-1)}^{a}
+\left(
+\frac{a(1+h)-x}{4a^2h}-\frac{1}{2a}
+\right)^2dx\\
+&\quad
++2\int_a^{a(1+h)}
+\left(\frac{a(1+h)-x}{4a^2h}\right)^2dx.
+\end{aligned}
+\]
+После вычисления этих элементарных интегралов получаем
+\[
+\|K_h*f-f\|_2^2
+=\frac{3h^3-6h^2+6h-2}{12ah^2},
+\qquad 1<h\le 2.
+\]
+
+При $h\ge 2$ весь носитель $f$ лежит внутри постоянного участка свёртки.
+Поэтому
+\[
+\begin{aligned}
+\|K_h*f-f\|_2^2
+&=2\int_0^a
+\left(\frac{1}{2ah}-\frac{1}{2a}\right)^2dx\\
+ +2\int_a^{a(h-1)}
+\left(\frac{1}{2ah}\right)^2dx\\
+&\quad
++2\int_{a(h-1)}^{a(1+h)}
+\left(\frac{a(1+h)-x}{4a^2h}\right)^2dx\\
+&=\frac{3h^2-3h-1}{6ah^2}.
+\end{aligned}
+\]
+Следовательно,
+\[
+\|K_h*f-f\|_2^2=
+\begin{cases}
+\dfrac{h}{12a}, & 0<h\le 1,\\[6pt]
+\dfrac{3h^3-6h^2+6h-2}{12ah^2}, & 1<h\le 2,\\[6pt]
+\dfrac{3h^2-3h-1}{6ah^2}, & h\ge 2.
+\end{cases}
+\]
+
+Подставим найденные выражения в формулу для ОИСКО. Для $0<h\le 1$
+\[
+\frac{R(K)}{h}-\|K_h*f\|_2^2
+=\frac{1}{2ah}-\frac{3-h}{6a}.
+\]
+Для $h\ge 1$
+\[
+\frac{R(K)}{h}-\|K_h*f\|_2^2
+=\frac{1}{2ah}-\frac{3h-1}{6ah^2}
+=\frac{1}{6ah^2}.
+\]
+Итоговая формула имеет вид
+\[
+\operatorname{MISE}(h,n)=
+\begin{cases}
+\dfrac{h}{12a}
++
+\dfrac{1}{n}\left(\dfrac{1}{2ah}-\dfrac{3-h}{6a}\right),
+& 0<h\le 1,\\[10pt]
+\dfrac{3h^3-6h^2+6h-2}{12ah^2}
++
+\dfrac{1}{n}\cdot\dfrac{1}{6ah^2},
+& 1<h\le 2,\\[10pt]
+\dfrac{3h^2-3h-1}{6ah^2}
++
+\dfrac{1}{n}\cdot\dfrac{1}{6ah^2},
+& h\ge 2,
+\end{cases}
+\qquad a=\sqrt{3}.
+\]
+
+Проверим согласованность формулы. В точке $h=1$ первая и вторая ветви дают
+\[
+\frac{1}{12a}+\frac{1}{6an}.
+\]
+В точке $h=2$ вторая и третья ветви дают
+\[
+\frac{5}{24a}+\frac{1}{24an}.
+\]
+Значит, $\operatorname{MISE}(h,n)$ непрерывна при $h=1$ и $h=2$.
+Кроме того,
+\[
+h\to 0+:\qquad
+\operatorname{MISE}(h,n)\sim \frac{1}{2anh}\to\infty,
+\]
+а при $h\to\infty$
+\[
+\operatorname{MISE}(h,n)\to\frac{1}{2a}
+=\int_{-\infty}^{\infty}f^2(x)\,dx
+=\frac{1}{2\sqrt{3}}.
+\]
