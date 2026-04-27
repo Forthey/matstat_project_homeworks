@@ -9,7 +9,7 @@ import numpy as np
 
 A = math.sqrt(3.0)
 F_NORM = 1.0 / (2.0 * A)
-N_REF = 400
+N_REF = [30, 100]
 PLOTS_DIR = Path(__file__).resolve().parent / "plots"
 
 
@@ -62,13 +62,36 @@ def find_optimum(n: int, xi_grid: np.ndarray) -> tuple[float, float]:
     return float(candidate_array[index]), float(values[index])
 
 
-def verify_formula() -> list[str]:
-    checks: list[str] = []
+def normalize_n_ref(n_ref: int | list[int] | tuple[int, ...]) -> list[int]:
+    if isinstance(n_ref, int):
+        return [n_ref]
+    return [int(n) for n in n_ref]
 
-    left_at_1 = float(delta_bar(np.array([1.0 - 1e-9]), N_REF)[0])
-    right_at_1 = float(delta_bar(np.array([1.0 + 1e-9]), N_REF)[0])
-    left_at_2 = float(delta_bar(np.array([2.0 - 1e-9]), N_REF)[0])
-    right_at_2 = float(delta_bar(np.array([2.0 + 1e-9]), N_REF)[0])
+
+def format_n_refs(n_refs: list[int]) -> str:
+    return "_".join(str(n) for n in n_refs)
+
+
+def delta_plot_filename(n_refs: list[int]) -> str:
+    if len(n_refs) == 1:
+        return f"delta_bar_n{n_refs[0]}.png"
+    return f"delta_bar_n{format_n_refs(n_refs)}.png"
+
+
+def efficiency_plot_filename(n_refs: list[int]) -> str:
+    if len(n_refs) == 1:
+        return f"efficiency_en_n{n_refs[0]}.png"
+    return f"efficiency_en_n{format_n_refs(n_refs)}.png"
+
+
+def verify_formula(n_refs: list[int]) -> list[str]:
+    checks: list[str] = []
+    n_ref = n_refs[0]
+
+    left_at_1 = float(delta_bar(np.array([1.0 - 1e-9]), n_ref)[0])
+    right_at_1 = float(delta_bar(np.array([1.0 + 1e-9]), n_ref)[0])
+    left_at_2 = float(delta_bar(np.array([2.0 - 1e-9]), n_ref)[0])
+    right_at_2 = float(delta_bar(np.array([2.0 + 1e-9]), n_ref)[0])
 
     checks.append(
         f"continuity xi=1: |left-right| = {abs(left_at_1 - right_at_1):.3e}"
@@ -77,7 +100,7 @@ def verify_formula() -> list[str]:
         f"continuity xi=2: |left-right| = {abs(left_at_2 - right_at_2):.3e}"
     )
 
-    small_values = delta_bar(np.array([0.2, 0.05, 0.02]), N_REF)
+    small_values = delta_bar(np.array([0.2, 0.05, 0.02]), n_ref)
     growth_ok = bool(small_values[2] > small_values[1] > small_values[0])
     checks.append(
         "growth near 0+: "
@@ -88,18 +111,18 @@ def verify_formula() -> list[str]:
         )
     )
 
-    large_value = float(delta_bar(np.array([50.0]), N_REF)[0])
+    large_value = float(delta_bar(np.array([50.0]), n_ref)[0])
     checks.append(
         f"large xi limit: delta_bar(50) = {large_value:.6f}, target = {F_NORM:.6f}, "
         f"diff = {abs(large_value - F_NORM):.3e}"
     )
 
-    xi_opt, delta_min = find_optimum(N_REF, build_xi_grid())
-    off_opt_values = delta_bar(np.array([xi_opt / 2.0, xi_opt * 2.0]), N_REF)
-    efficiency_at_opt = float(delta_min / delta_bar(np.array([xi_opt]), N_REF)[0])
+    xi_opt, delta_min = find_optimum(n_ref, build_xi_grid())
+    off_opt_values = delta_bar(np.array([xi_opt / 2.0, xi_opt * 2.0]), n_ref)
+    efficiency_at_opt = float(delta_min / delta_bar(np.array([xi_opt]), n_ref)[0])
     off_opt_ok = bool(np.all(delta_min / off_opt_values < 1.0))
     checks.append(
-        f"efficiency: e_400(xi_opt)={efficiency_at_opt:.6f}, "
+        f"efficiency: e_{n_ref}(xi_opt)={efficiency_at_opt:.6f}, "
         f"off optimum < 1 is {off_opt_ok}"
     )
 
@@ -122,27 +145,42 @@ def configure_style() -> None:
     )
 
 
-def save_delta_plot(xi_grid: np.ndarray, xi_opt: float, delta_min: float) -> None:
+def save_delta_plot(
+    xi_grid: np.ndarray,
+    ref_optima: dict[int, tuple[float, float]],
+    n_refs: list[int],
+) -> str:
     fig, ax = plt.subplots(figsize=(8.4, 5.2))
-    values = delta_bar(xi_grid, N_REF)
 
-    ax.plot(xi_grid, values, color="#1f5aa6", linewidth=2.2)
-    ax.scatter([xi_opt], [delta_min], color="#c0392b", s=45, zorder=3)
-    ax.annotate(
-        rf"минимум: $\xi_{{\mathrm{{opt}}}} \approx {xi_opt:.3f}$",
-        xy=(xi_opt, delta_min),
-        xytext=(xi_opt + 0.35, delta_min + 0.02),
-        arrowprops={"arrowstyle": "->", "color": "#444444"},
-        fontsize=10,
-    )
+    for n_ref in n_refs:
+        xi_opt, delta_min = ref_optima[n_ref]
+        values = delta_bar(xi_grid, n_ref)
+        ax.plot(xi_grid, values, linewidth=2.2, label=rf"$n={n_ref}$")
+        ax.scatter([xi_opt], [delta_min], s=38, zorder=3)
+
+    if len(n_refs) == 1:
+        n_ref = n_refs[0]
+        xi_opt, delta_min = ref_optima[n_ref]
+        ax.annotate(
+            rf"минимум: $\xi_{{\mathrm{{opt}}}} \approx {xi_opt:.3f}$",
+            xy=(xi_opt, delta_min),
+            xytext=(xi_opt + 0.35, delta_min + 0.02),
+            arrowprops={"arrowstyle": "->", "color": "#444444"},
+            fontsize=10,
+        )
+    else:
+        ax.legend(title=r"$n$", frameon=True)
+
     ax.set_xlim(0.0, 8.0)
     ax.set_xlabel(r"$\xi$")
-    ax.set_ylabel(r"$\bar{\delta}_{400}(\xi)$")
-    ax.set_title(r"ОИСКО $\bar{\delta}_{400}(\xi)$")
+    ax.set_ylabel(r"$\bar{\delta}_{n}(\xi)$")
+    ax.set_title(r"ОИСКО $\bar{\delta}_{n}(\xi)$")
 
     fig.tight_layout()
-    fig.savefig(PLOTS_DIR / "delta_bar_n400.png", dpi=180)
+    filename = delta_plot_filename(n_refs)
+    fig.savefig(PLOTS_DIR / filename, dpi=180)
     plt.close(fig)
+    return filename
 
 
 def save_xi_opt_plot(n_values: np.ndarray, xi_opt_values: np.ndarray) -> None:
@@ -173,36 +211,52 @@ def save_delta_min_plot(n_values: np.ndarray, delta_min_values: np.ndarray) -> N
     plt.close(fig)
 
 
-def save_efficiency_plot(xi_grid: np.ndarray, xi_opt: float, delta_min: float) -> None:
+def save_efficiency_plot(
+    xi_grid: np.ndarray,
+    ref_optima: dict[int, tuple[float, float]],
+    n_refs: list[int],
+) -> str:
     fig, ax = plt.subplots(figsize=(8.4, 5.2))
-    delta_values = delta_bar(xi_grid, N_REF)
-    efficiency = delta_min / delta_values
 
-    ax.plot(xi_grid, efficiency, color="#8e3b8a", linewidth=2.2)
+    for n_ref in n_refs:
+        xi_opt, delta_min = ref_optima[n_ref]
+        delta_values = delta_bar(xi_grid, n_ref)
+        efficiency = delta_min / delta_values
+        ax.plot(xi_grid, efficiency, linewidth=2.2, label=rf"$n={n_ref}$")
+        ax.scatter([xi_opt], [1.0], s=38, zorder=3)
+
     ax.axhline(1.0, color="#666666", linewidth=1.1, linestyle="--", alpha=0.75)
-    ax.scatter([xi_opt], [1.0], color="#c0392b", s=45, zorder=3)
-    ax.annotate(
-        r"$e_{400}(\xi)=1$ при $\xi_{\mathrm{opt}}$",
-        xy=(xi_opt, 1.0),
-        xytext=(xi_opt + 0.55, 0.87),
-        arrowprops={"arrowstyle": "->", "color": "#444444"},
-        fontsize=10,
-    )
+    if len(n_refs) == 1:
+        n_ref = n_refs[0]
+        xi_opt, _ = ref_optima[n_ref]
+        ax.annotate(
+            rf"$e_{{{n_ref}}}(\xi)=1$ при $\xi_{{\mathrm{{opt}}}}$",
+            xy=(xi_opt, 1.0),
+            xytext=(xi_opt + 0.55, 0.87),
+            arrowprops={"arrowstyle": "->", "color": "#444444"},
+            fontsize=10,
+        )
+    else:
+        ax.legend(title=r"$n$", frameon=True)
+
     ax.set_xlim(0.0, 8.0)
     ax.set_ylim(0.0, 1.05)
     ax.set_xlabel(r"$\xi$")
-    ax.set_ylabel(r"$e_{400}(\xi)$")
-    ax.set_title(r"Эффективность $e_{400}(\xi)$")
+    ax.set_ylabel(r"$e_n(\xi)$")
+    ax.set_title(r"Эффективность $e_n(\xi)$")
 
     fig.tight_layout()
-    fig.savefig(PLOTS_DIR / "efficiency_en_n400.png", dpi=180)
+    filename = efficiency_plot_filename(n_refs)
+    fig.savefig(PLOTS_DIR / filename, dpi=180)
     plt.close(fig)
+    return filename
 
 
 def main() -> None:
     PLOTS_DIR.mkdir(parents=True, exist_ok=True)
     configure_style()
 
+    n_refs = normalize_n_ref(N_REF)
     xi_grid = build_xi_grid()
     n_values = np.arange(10, 1001)
 
@@ -210,17 +264,17 @@ def main() -> None:
     xi_opt_values = optima[:, 0]
     delta_min_values = optima[:, 1]
 
-    xi_opt_ref, delta_min_ref = find_optimum(N_REF, xi_grid)
+    ref_optima = {n_ref: find_optimum(n_ref, xi_grid) for n_ref in n_refs}
 
-    save_delta_plot(xi_grid, xi_opt_ref, delta_min_ref)
+    delta_plot = save_delta_plot(xi_grid, ref_optima, n_refs)
     save_xi_opt_plot(n_values, xi_opt_values)
     save_delta_min_plot(n_values, delta_min_values)
-    save_efficiency_plot(xi_grid, xi_opt_ref, delta_min_ref)
+    efficiency_plot = save_efficiency_plot(xi_grid, ref_optima, n_refs)
 
     print("Generated plots:")
     for filename in (
-        "delta_bar_n400.png",
-        "efficiency_en_n400.png",
+        delta_plot,
+        efficiency_plot,
         "xi_opt_vs_n.png",
         "delta_min_vs_n.png",
     ):
@@ -228,14 +282,18 @@ def main() -> None:
 
     print()
     print("Verification checks:")
-    for line in verify_formula():
+    for line in verify_formula(n_refs):
         print(f"  - {line}")
 
     print()
-    print("Reference optimum for n=400:")
-    print(f"  - xi_opt = {xi_opt_ref:.6f}")
-    print(f"  - delta_bar_min = {delta_min_ref:.6f}")
-    print(f"  - e_400(xi_opt) = {delta_min_ref / delta_bar(np.array([xi_opt_ref]), N_REF)[0]:.6f}")
+    print("Reference optima:")
+    for n_ref in n_refs:
+        xi_opt_ref, delta_min_ref = ref_optima[n_ref]
+        efficiency_at_opt = delta_min_ref / delta_bar(np.array([xi_opt_ref]), n_ref)[0]
+        print(f"  - n={n_ref}:")
+        print(f"      xi_opt = {xi_opt_ref:.6f}")
+        print(f"      delta_bar_min = {delta_min_ref:.6f}")
+        print(f"      e_{n_ref}(xi_opt) = {efficiency_at_opt:.6f}")
 
 
 if __name__ == "__main__":
