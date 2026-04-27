@@ -285,3 +285,58 @@ h\to 0+:\qquad
 =\int_{-\infty}^{\infty}f^2(x)\,dx
 =\frac{1}{2\sqrt{3}}.
 \]
+
+\section*{Графическая иллюстрация результатов}
+
+Для графиков положим $\xi=h$ и используем полученную выше кусочно-заданную
+формулу для $\operatorname{MISE}(h,n)$ без дополнительных аппроксимаций.
+Нормированную ошибку обозначим через
+\[
+\Delta(h,n)=\frac{\operatorname{MISE}(h,n)}{\int f^2(x)\,dx}
+=2\sqrt{3}\,\operatorname{MISE}(h,n),
+\]
+а эффективность определим как
+\[
+E(\xi)=\frac{\Delta_{\min}(400)}{\Delta(\xi,400)},
+\qquad
+\Delta_{\min}(400)=\min_h \Delta(h,400).
+\]
+
+\begin{figure}[H]
+\centering
+\plotplaceholder[0.82\textwidth]{plots/mise_delta_n400.png}
+\caption{График $\delta(\xi)=\operatorname{MISE}(h,400)$, построенный по аналитической формуле для прямоугольного ядра.}
+\end{figure}
+
+При малых $\xi=h$ ошибка быстро растёт из-за дисперсионного члена
+$\sim (2anh)^{-1}$, а при больших $h$ кривая приближается к пределу
+$1/(2\sqrt{3})$.
+
+\begin{figure}[H]
+\centering
+\plotplaceholder[0.82\textwidth]{plots/optimal_h_vs_n.png}
+\caption{Оптимальная ширина окна $h_{\mathrm{opt}}(n)$, численно найденная из минимума аналитической функции $\operatorname{MISE}(h,n)$.}
+\end{figure}
+
+По мере роста объёма выборки оптимальное значение $h$ убывает, поскольку
+для больших $n$ можно использовать более узкое окно без сильного штрафа по
+дисперсии.
+
+\begin{figure}[H]
+\centering
+\plotplaceholder[0.82\textwidth]{plots/min_mise_vs_n.png}
+\caption{Зависимость $\min_h \operatorname{MISE}(h,n)$ от размера выборки $n$ для той же аналитической формулы.}
+\end{figure}
+
+Нижняя граница ошибки по $n$ монотонно убывает: увеличение выборки улучшает
+наилучшее достижимое качество оценки.
+
+\begin{figure}[H]
+\centering
+\plotplaceholder[0.82\textwidth]{plots/efficiency_n400.png}
+\caption{Эффективность $E(\xi)=\Delta_{\min}(400)/\Delta(\xi,400)$ при $n=400$.}
+\end{figure}
+
+Эффективность максимальна вблизи оптимального значения $h$ и убывает как при
+слишком малых, так и при слишком больших $\xi$, что напрямую отражает форму
+аналитической зависимости $\operatorname{MISE}(h,n)$.

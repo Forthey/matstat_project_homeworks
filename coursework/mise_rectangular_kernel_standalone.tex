@@ -5,8 +5,24 @@
 \usepackage[russian]{babel}
 \usepackage{amsmath,amssymb}
 \usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{float}
 
 \geometry{margin=2.2cm}
+
+\newcommand{\plotplaceholder}[2][0.9\textwidth]{%
+    \IfFileExists{#2}{%
+        \includegraphics[width=#1]{#2}%
+    }{%
+        \fbox{%
+            \begin{minipage}[c][0.22\textheight][c]{#1}
+            \centering
+            Заглушка для графика\\[4pt]
+            \texttt{\detokenize{#2}}
+            \end{minipage}%
+        }%
+    }%
+}
 
 \begin{document}
 
