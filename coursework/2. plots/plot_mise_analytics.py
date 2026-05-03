@@ -8,8 +8,9 @@ import numpy as np
 
 
 A = math.sqrt(3.0)
-F_NORM = 1.0 / (2.0 * A)
+NORMALIZED_LIMIT = 1.0
 N_REF = [30, 100]
+EXTRA_N_REFS = [[400]]
 PLOTS_DIR = Path(__file__).resolve().parent
 
 
@@ -39,7 +40,7 @@ def delta_bar(xi: np.ndarray | float, n: int) -> np.ndarray:
         + (1.0 / n) * (1.0 / (6.0 * A * xi_3**2))
     )
 
-    return values
+    return 2.0 * A * values
 
 
 def build_xi_grid() -> np.ndarray:
@@ -113,8 +114,9 @@ def verify_formula(n_refs: list[int]) -> list[str]:
 
     large_value = float(delta_bar(np.array([50.0]), n_ref)[0])
     checks.append(
-        f"large xi limit: delta_bar(50) = {large_value:.6f}, target = {F_NORM:.6f}, "
-        f"diff = {abs(large_value - F_NORM):.3e}"
+        f"large xi limit: delta_bar(50) = {large_value:.6f}, "
+        f"target = {NORMALIZED_LIMIT:.6f}, "
+        f"diff = {abs(large_value - NORMALIZED_LIMIT):.3e}"
     )
 
     xi_opt, delta_min = find_optimum(n_ref, build_xi_grid())
@@ -173,8 +175,8 @@ def save_delta_plot(
 
     ax.set_xlim(0.0, 8.0)
     ax.set_xlabel(r"$\xi$")
-    ax.set_ylabel(r"$\bar{\delta}_{n}(\xi)$")
-    ax.set_title(r"ОИСКО $\bar{\delta}_{n}(\xi)$")
+    ax.set_ylabel(r"$\bar{\delta}^{*}_{n}(\xi)$")
+    ax.set_title(r"Нормированная ОИСКО $\bar{\delta}^{*}_{n}(\xi)$")
 
     fig.tight_layout()
     filename = delta_plot_filename(n_refs)
@@ -203,8 +205,8 @@ def save_delta_min_plot(n_values: np.ndarray, delta_min_values: np.ndarray) -> N
     ax.plot(n_values, delta_min_values, color="#7a3e00", linewidth=2.2)
     ax.set_xlim(int(n_values[0]), int(n_values[-1]))
     ax.set_xlabel(r"$n$")
-    ax.set_ylabel(r"$\bar{\delta}_{n,\min}$")
-    ax.set_title(r"Минимальная ОИСКО $\bar{\delta}_{n,\min}$")
+    ax.set_ylabel(r"$\bar{\delta}^{*}_{n,\min}$")
+    ax.set_title(r"Минимальная нормированная ОИСКО $\bar{\delta}^{*}_{n,\min}$")
 
     fig.tight_layout()
     fig.savefig(PLOTS_DIR / "delta_min_vs_n.png", dpi=180)
@@ -271,12 +273,20 @@ def main() -> None:
     save_delta_min_plot(n_values, delta_min_values)
     efficiency_plot = save_efficiency_plot(xi_grid, ref_optima, n_refs)
 
+    extra_plots: list[str] = []
+    for extra_n_refs_raw in EXTRA_N_REFS:
+        extra_n_refs = normalize_n_ref(extra_n_refs_raw)
+        extra_ref_optima = {n_ref: find_optimum(n_ref, xi_grid) for n_ref in extra_n_refs}
+        extra_plots.append(save_delta_plot(xi_grid, extra_ref_optima, extra_n_refs))
+        extra_plots.append(save_efficiency_plot(xi_grid, extra_ref_optima, extra_n_refs))
+
     print("Generated plots:")
     for filename in (
         delta_plot,
         efficiency_plot,
         "xi_opt_vs_n.png",
         "delta_min_vs_n.png",
+        *extra_plots,
     ):
         print(f"  - {PLOTS_DIR / filename}")
 
