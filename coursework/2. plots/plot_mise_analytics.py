@@ -10,7 +10,7 @@ import numpy as np
 A = math.sqrt(3.0)
 F_NORM = 1.0 / (2.0 * A)
 N_REF = [30, 100]
-PLOTS_DIR = Path(__file__).resolve().parent / "plots"
+PLOTS_DIR = Path(__file__).resolve().parent
 
 
 def delta_bar(xi: np.ndarray | float, n: int) -> np.ndarray:

@@ -1,0 +1,77 @@
+\documentclass[12pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T2A]{fontenc}
+\usepackage[russian]{babel}
+\usepackage{amsmath,amssymb}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{float}
+
+\geometry{margin=2.2cm}
+
+\newcommand{\plotplaceholder}[2][0.9\textwidth]{%
+    \IfFileExists{#2}{%
+        \includegraphics[width=#1]{#2}%
+    }{%
+        \fbox{%
+            \begin{minipage}[c][0.22\textheight][c]{#1}
+            \centering
+            Заглушка для графика\\[4pt]
+            \texttt{\detokenize{#2}}
+            \end{minipage}%
+        }%
+    }%
+}
+
+\begin{document}
+
+\title{Графики}
+\author{}
+\date{}
+\maketitle
+
+\section*{Графическая иллюстрация аналитически полученных результатов}
+
+Основные графики построены для $n=30$ и $n=100$ по формуле
+$\bar{\delta}_n(\xi)$ без дополнительных аппроксимаций.
+
+\begin{figure}[H]
+\centering
+\plotplaceholder[0.82\textwidth]{delta_bar_n30_100.png}
+\caption{Графики ОИСКО $\bar{\delta}_{30}(\xi)$ и $\bar{\delta}_{100}(\xi)$, построенные по аналитической формуле для прямоугольного ядра.}
+\end{figure}
+
+При малых $\xi$ ошибка быстро растёт из-за дисперсионного члена
+$\sim (2an\xi)^{-1}$, а при больших $\xi$ кривая приближается к пределу
+$1/(2\sqrt{3})$.
+
+\begin{figure}[H]
+\centering
+\plotplaceholder[0.82\textwidth]{efficiency_en_n30_100.png}
+\caption{Эффективности $e_{30}(\xi)$ и $e_{100}(\xi)$ с максимумом, равным $1$.}
+\end{figure}
+
+Эффективность максимальна вблизи оптимального значения $\xi$ и убывает как
+при слишком малых, так и при слишком больших значениях параметра.
+
+\begin{figure}[H]
+\centering
+\plotplaceholder[0.82\textwidth]{xi_opt_vs_n.png}
+\caption{Дополнительно: зависимость $\xi_{\mathrm{opt}}(n)$ от размера выборки $n$.}
+\end{figure}
+
+По мере роста объёма выборки оптимальное значение $\xi$ убывает, поскольку
+для больших $n$ можно использовать более узкое окно без сильного штрафа по
+дисперсии.
+
+\begin{figure}[H]
+\centering
+\plotplaceholder[0.82\textwidth]{delta_min_vs_n.png}
+\caption{Дополнительно: зависимость $\bar{\delta}_{n,\min}$ от размера выборки $n$.}
+\end{figure}
+
+Минимальная ОИСКО монотонно убывает: увеличение выборки улучшает наилучшее
+достижимое качество оценки.
+
+\end{document}

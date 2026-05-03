@@ -1,3 +1,20 @@
+\documentclass[12pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T2A]{fontenc}
+\usepackage[russian]{babel}
+\usepackage{amsmath,amssymb}
+\usepackage{geometry}
+
+\geometry{margin=2.2cm}
+
+\begin{document}
+
+\title{ОИСКО}
+\author{}
+\date{}
+\maketitle
+
 \section*{Аналитический расчёт ОИСКО для прямоугольного ядра}
 
 Пусть
@@ -355,45 +372,5 @@ e_n(\xi)=\frac{\bar{\delta}_{n,\min}}{\bar{\delta}_n(\xi)},
 Максимальное значение эффективности равно $1$ и достигается при
 $\xi=\xi_{\mathrm{opt}}(n)$.
 
-\section*{Графическая иллюстрация}
 
-Основные графики построены для $n=400$ по формуле
-$\bar{\delta}_n(\xi)$ без дополнительных аппроксимаций.
-
-\begin{figure}[H]
-\centering
-\plotplaceholder[0.82\textwidth]{plots/delta_bar_n400.png}
-\caption{График ОИСКО $\bar{\delta}_{400}(\xi)$, построенный по аналитической формуле для прямоугольного ядра.}
-\end{figure}
-
-При малых $\xi$ ошибка быстро растёт из-за дисперсионного члена
-$\sim (2an\xi)^{-1}$, а при больших $\xi$ кривая приближается к пределу
-$1/(2\sqrt{3})$.
-
-\begin{figure}[H]
-\centering
-\plotplaceholder[0.82\textwidth]{plots/efficiency_en_n400.png}
-\caption{Эффективность $e_{400}(\xi)=\bar{\delta}_{400,\min}/\bar{\delta}_{400}(\xi)$ с максимумом, равным $1$.}
-\end{figure}
-
-Эффективность максимальна вблизи оптимального значения $\xi$ и убывает как
-при слишком малых, так и при слишком больших значениях параметра.
-
-\begin{figure}[H]
-\centering
-\plotplaceholder[0.82\textwidth]{plots/xi_opt_vs_n.png}
-\caption{Дополнительно: зависимость $\xi_{\mathrm{opt}}(n)$ от размера выборки $n$.}
-\end{figure}
-
-По мере роста объёма выборки оптимальное значение $\xi$ убывает, поскольку
-для больших $n$ можно использовать более узкое окно без сильного штрафа по
-дисперсии.
-
-\begin{figure}[H]
-\centering
-\plotplaceholder[0.82\textwidth]{plots/delta_min_vs_n.png}
-\caption{Дополнительно: зависимость $\bar{\delta}_{n,\min}$ от размера выборки $n$.}
-\end{figure}
-
-Минимальная ОИСКО монотонно убывает: увеличение выборки улучшает наилучшее
-достижимое качество оценки.
+\end{document}
