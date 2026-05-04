@@ -10,6 +10,8 @@ import numpy as np
 A = math.sqrt(3.0)
 N_REFS = [30, 100]
 DELTA_REFS = [-0.5, -0.25, 0.0, 0.25, 0.5]
+COMPARISON_N_REFS = [30, 100]
+COMPARISON_DELTA = 0.25
 SAMPLE_SIZE = 400
 RANDOM_SEED = 20260504
 PLOTS_DIR = Path(__file__).resolve().parent
@@ -47,6 +49,35 @@ def rmise_histogram(xi: np.ndarray | float, n: int, delta: float) -> np.ndarray:
     return values
 
 
+def rmise_kernel(xi: np.ndarray | float, n: int) -> np.ndarray:
+    xi_array = np.asarray(xi, dtype=float)
+    values = np.empty_like(xi_array)
+
+    mask_1 = xi_array <= 1.0
+    mask_2 = (xi_array > 1.0) & (xi_array <= 2.0)
+    mask_3 = xi_array > 2.0
+
+    xi_1 = xi_array[mask_1]
+    xi_2 = xi_array[mask_2]
+    xi_3 = xi_array[mask_3]
+
+    values[mask_1] = (
+        xi_1 / 6.0
+        + (1.0 / n) * (1.0 / xi_1 - (3.0 - xi_1) / 3.0)
+    )
+    values[mask_2] = (
+        (3.0 * xi_2**3 - 6.0 * xi_2**2 + 6.0 * xi_2 - 2.0)
+        / (6.0 * xi_2**2)
+        + 1.0 / (3.0 * n * xi_2**2)
+    )
+    values[mask_3] = (
+        (3.0 * xi_3**2 - 3.0 * xi_3 - 1.0) / (3.0 * xi_3**2)
+        + 1.0 / (3.0 * n * xi_3**2)
+    )
+
+    return values
+
+
 def build_xi_grid() -> np.ndarray:
     left = np.geomspace(0.02, 0.25, 550, endpoint=True)
     middle = np.linspace(0.25, 1.5, 1000, endpoint=True)[1:]
@@ -57,6 +88,15 @@ def build_xi_grid() -> np.ndarray:
 def find_optimum(n: int, delta: float, xi_grid: np.ndarray) -> tuple[float, float]:
     candidate_grid = np.unique(np.concatenate([xi_grid, np.array([0.5, 1.0, 2.0])]))
     values = rmise_histogram(candidate_grid, n, delta)
+    index = int(np.argmin(values))
+    return float(candidate_grid[index]), float(values[index])
+
+
+def find_kernel_optimum(n: int, xi_grid: np.ndarray) -> tuple[float, float]:
+    candidate_grid = np.unique(
+        np.concatenate([xi_grid, np.array([math.sqrt(6.0 / (n + 2.0)), 1.0, 2.0])])
+    )
+    values = rmise_kernel(candidate_grid, n)
     index = int(np.argmin(values))
     return float(candidate_grid[index]), float(values[index])
 
@@ -222,6 +262,41 @@ def save_optimum_vs_n_plot(xi_grid: np.ndarray) -> None:
     plt.close(fig)
 
 
+def save_hist_kernel_comparison_plot(xi_grid: np.ndarray) -> None:
+    labels = [str(n) for n in COMPARISON_N_REFS]
+    kernel_values = []
+    hist_shifted_values = []
+    hist_aligned_values = []
+
+    for n_ref in COMPARISON_N_REFS:
+        _, kernel_min = find_kernel_optimum(n_ref, xi_grid)
+        _, hist_shifted_min = find_optimum(n_ref, COMPARISON_DELTA, xi_grid)
+        _, hist_aligned_min = find_optimum(n_ref, 0.0, xi_grid)
+        kernel_values.append(kernel_min)
+        hist_shifted_values.append(hist_shifted_min)
+        hist_aligned_values.append(hist_aligned_min)
+
+    x = np.arange(len(labels))
+    width = 0.25
+
+    fig, ax = plt.subplots(figsize=(8.4, 5.2))
+    ax.bar(x - width, kernel_values, width, label="ядерная оценка")
+    ax.bar(x, hist_shifted_values, width, label=rf"гистограмма, $\Delta={COMPARISON_DELTA:g}$")
+    ax.bar(x + width, hist_aligned_values, width, label=r"гистограмма, $\Delta=0$")
+
+    ax.set_xticks(x)
+    ax.set_xticklabels(labels)
+    ax.set_xlabel(r"$n$")
+    ax.set_ylabel("минимальная нормированная ОИСКО")
+    ax.set_title("Сравнение гистограммной и ядерной оценок")
+    ax.legend(frameon=True)
+    ax.set_ylim(bottom=0.0)
+
+    fig.tight_layout()
+    fig.savefig(PLOTS_DIR / "hist_kernel_comparison.png", dpi=180)
+    plt.close(fig)
+
+
 def verify_formula(xi_grid: np.ndarray) -> list[str]:
     checks: list[str] = []
 
@@ -262,6 +337,7 @@ def main() -> None:
     save_rmise_vs_xi_plot(xi_grid, N_REFS)
     save_rmise_vs_delta_plot(xi_grid, 100)
     save_optimum_vs_n_plot(xi_grid)
+    save_hist_kernel_comparison_plot(xi_grid)
 
     print("Generated plots:")
     for filename in (
@@ -271,6 +347,7 @@ def main() -> None:
         "hist_rmise_vs_xi_n100.png",
         "hist_rmise_vs_delta_n100.png",
         "hist_xi_opt_vs_n.png",
+        "hist_kernel_comparison.png",
     ):
         print(f"  - {PLOTS_DIR / filename}")
 
