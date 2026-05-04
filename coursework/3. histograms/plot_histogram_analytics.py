@@ -15,6 +15,7 @@ COMPARISON_DELTA = 0.25
 SAMPLE_SIZE = 400
 RANDOM_SEED = 20260504
 PLOTS_DIR = Path(__file__).resolve().parent
+H_REFS = [0.35, 0.5, 0.75, 1.0, 1.5]
 
 
 def bin_probabilities(xi: float, delta: float) -> np.ndarray:
@@ -126,6 +127,106 @@ def build_histogram_edges(m: int, delta: float) -> np.ndarray:
     left = -A + delta * h
     right = A + delta * h
     return np.linspace(left, right, m + 1)
+
+
+def build_fixed_h_edges(h: float) -> np.ndarray:
+    edges = [-A]
+    current = -A
+    while current + h < A:
+        current += h
+        edges.append(current)
+    if edges[-1] < A:
+        edges.append(A)
+    return np.array(edges)
+
+
+def rmise_histogram_fixed_h(h: np.ndarray | float, n: int) -> np.ndarray:
+    h_array = np.asarray(h, dtype=float)
+    values = np.empty_like(h_array)
+
+    for index, h_value in np.ndenumerate(h_array):
+        edges = build_fixed_h_edges(float(h_value))
+        widths = np.diff(edges)
+        probabilities = widths / (2.0 * A)
+        mise = float(
+            np.sum(probabilities * (1.0 - probabilities) / (n * widths))
+        )
+        values[index] = 2.0 * A * mise
+
+    return values
+
+
+def draw_fixed_h_histogram(ax, sample: np.ndarray, h: float) -> None:
+    edges = build_fixed_h_edges(h)
+    counts, _ = np.histogram(sample, bins=edges)
+    widths = np.diff(edges)
+    heights = counts / (len(sample) * widths)
+    centers = edges[:-1] + widths / 2.0
+
+    ax.bar(
+        centers,
+        heights,
+        width=widths,
+        align="center",
+        color="#9ecae1",
+        edgecolor="#4f8ca8",
+        linewidth=1.0,
+        alpha=0.78,
+        label="гистограмма",
+    )
+
+
+def save_sample_histograms_h_grid(sample: np.ndarray) -> None:
+    x_plot = np.linspace(-2.3, 2.3, 900)
+    y_plot = density_uniform(x_plot)
+
+    fig, axes = plt.subplots(3, 2, figsize=(10.4, 12.0), sharex=True, sharey=True)
+    axes_flat = axes.ravel()
+
+    for ax, h in zip(axes_flat, H_REFS):
+        draw_fixed_h_histogram(ax, sample, h)
+        ax.plot(x_plot, y_plot, color="#d62728", linewidth=2.0, label=r"$f(x)$")
+        ax.set_title(rf"$h={h:g}$, $m={len(build_fixed_h_edges(h)) - 1}$")
+        ax.grid(True, alpha=0.28)
+        ax.legend(frameon=True, fontsize=9)
+
+    axes_flat[-1].axis("off")
+    for ax in axes[:, 0]:
+        ax.set_ylabel("плотность")
+    for ax in axes[-1, :]:
+        ax.set_xlabel("$x$")
+    axes[1, 1].set_xlabel("$x$")
+
+    fig.suptitle(
+        rf"Гистограммные оценки для разных шагов $h$, $n={SAMPLE_SIZE}$",
+        y=0.995,
+    )
+    fig.tight_layout()
+    fig.savefig(PLOTS_DIR / "sample_histograms_h_grid.png", dpi=180)
+    plt.close(fig)
+
+
+def save_rmise_vs_h_plot() -> None:
+    h_grid = np.linspace(0.08, 2.0 * A, 900)
+
+    fig, ax = plt.subplots(figsize=(8.4, 5.2))
+    for n_ref in N_REFS:
+        values = rmise_histogram_fixed_h(h_grid, n_ref)
+        ax.plot(h_grid, values, linewidth=2.0, label=rf"$n={n_ref}$")
+
+    for h in H_REFS:
+        ax.axvline(h, color="#777777", linewidth=0.8, alpha=0.35)
+
+    ax.set_xlim(0.0, 2.0 * A)
+    ax.set_ylim(bottom=0.0)
+    ax.set_xlabel(r"$h$")
+    ax.set_ylabel(r"$\operatorname{RMISE}_H(h)$")
+    ax.set_title(r"Ошибка упрощенной гистограммной оценки")
+    ax.legend(frameon=True)
+
+    fig.tight_layout()
+    fig.savefig(PLOTS_DIR / "hist_rmise_vs_h.png", dpi=180)
+    plt.close(fig)
 
 
 def save_sample_histograms_m_grid(sample: np.ndarray) -> None:
@@ -297,29 +398,27 @@ def save_hist_kernel_comparison_plot(xi_grid: np.ndarray) -> None:
     plt.close(fig)
 
 
-def verify_formula(xi_grid: np.ndarray) -> list[str]:
+def verify_formula() -> list[str]:
     checks: list[str] = []
 
-    for xi in [0.05, 0.25, 1.0, 2.5]:
-        for delta in [-0.5, 0.0, 0.5]:
-            probabilities = bin_probabilities(xi, delta)
-            checks.append(
-                f"sum p_i, xi={xi:g}, Delta={delta:g}: "
-                f"{float(np.sum(probabilities)):.12f}"
-            )
-
-    for n_ref in N_REFS:
-        xi_opt, rmise_min = find_optimum(n_ref, 0.0, xi_grid)
+    for h in H_REFS:
+        edges = build_fixed_h_edges(h)
+        widths = np.diff(edges)
+        probabilities = widths / (2.0 * A)
         checks.append(
-            f"Delta=0 optimum, n={n_ref}: xi_opt={xi_opt:.6f}, "
-            f"RMISE_min={rmise_min:.6f}"
+            f"sum p_j, h={h:g}: {float(np.sum(probabilities)):.12f}, "
+            f"m={len(widths)}"
         )
 
-    small_values = rmise_histogram(np.array([0.2, 0.05, 0.02]), 30, 0.0)
-    checks.append(
-        "growth near 0+, n=30, Delta=0: "
-        f"{small_values[0]:.6f}, {small_values[1]:.6f}, {small_values[2]:.6f}"
-    )
+    for n_ref in N_REFS:
+        for h in [0.5, 1.0, 2.0 * A]:
+            value = float(rmise_histogram_fixed_h(np.array([h]), n_ref)[0])
+            m = len(build_fixed_h_edges(h)) - 1
+            expected = (m - 1.0) / n_ref
+            checks.append(
+                f"RMISE fixed h, n={n_ref}, h={h:.6f}: "
+                f"value={value:.6f}, expected={expected:.6f}"
+            )
 
     return checks
 
@@ -331,29 +430,21 @@ def main() -> None:
     rng = np.random.default_rng(RANDOM_SEED)
     sample = rng.uniform(-A, A, SAMPLE_SIZE)
 
-    xi_grid = build_xi_grid()
+    save_sample_histograms_h_grid(sample)
     save_sample_histograms_m_grid(sample)
-    save_sample_histograms_delta_grid(sample)
-    save_rmise_vs_xi_plot(xi_grid, N_REFS)
-    save_rmise_vs_delta_plot(xi_grid, 100)
-    save_optimum_vs_n_plot(xi_grid)
-    save_hist_kernel_comparison_plot(xi_grid)
+    save_rmise_vs_h_plot()
 
     print("Generated plots:")
     for filename in (
+        "sample_histograms_h_grid.png",
         "sample_histograms_m_grid.png",
-        "sample_histograms_delta_grid.png",
-        "hist_rmise_vs_xi_n30.png",
-        "hist_rmise_vs_xi_n100.png",
-        "hist_rmise_vs_delta_n100.png",
-        "hist_xi_opt_vs_n.png",
-        "hist_kernel_comparison.png",
+        "hist_rmise_vs_h.png",
     ):
         print(f"  - {PLOTS_DIR / filename}")
 
     print()
     print("Verification checks:")
-    for line in verify_formula(xi_grid):
+    for line in verify_formula():
         print(f"  - {line}")
 
 
