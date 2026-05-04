@@ -1,0 +1,150 @@
+\documentclass[12pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T2A]{fontenc}
+\usepackage[russian]{babel}
+\usepackage{amsmath,amssymb}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{float}
+
+\geometry{margin=2.2cm}
+
+\newcommand{\plotplaceholder}[2][0.9\textwidth]{%
+    \IfFileExists{#2}{%
+        \includegraphics[width=#1]{#2}%
+    }{%
+        \fbox{%
+            \begin{minipage}[c][0.22\textheight][c]{#1}
+            \centering
+            Заглушка для графика\\[4pt]
+            \texttt{\detokenize{#2}}
+            \end{minipage}%
+        }%
+    }%
+}
+
+\begin{document}
+
+\title{Метод Монте-Карло}
+\author{}
+\date{}
+\maketitle
+
+\section*{Цель}
+
+В первом разделе была аналитически получена нормированная ОИСКО ядерной
+оценки с прямоугольным ядром. Метод Монте-Карло позволяет проверить эту
+формулу численно: мы многократно генерируем выборки, для каждой выборки
+строим оценку плотности и считаем её интегральную квадратическую ошибку.
+После усреднения по большому числу повторов результат должен быть близок к
+аналитической RMISE.
+
+Истинная плотность остаётся прежней:
+\[
+a=\sqrt{3},\qquad
+f(x)=\frac{1}{2a}\mathbf 1_{\{|x|\le a\}}.
+\]
+Ядерная оценка плотности имеет вид
+\[
+\widehat f_{\xi}(x)
+=
+\frac{1}{n\xi}\sum_{j=1}^n
+K\left(\frac{x-X_j}{\xi}\right),
+\]
+где
+\[
+K(x)=\frac{1}{2a}\mathbf 1_{\{|x|\le a\}}.
+\]
+
+\section*{Алгоритм Монте-Карло}
+
+Фиксируем объём выборки $n$ и параметр сглаживания $\xi$. Один прогон
+Монте-Карло состоит из следующих шагов.
+
+\begin{enumerate}
+\item Сгенерировать выборку
+\[
+X_1,\ldots,X_n\sim U[-a,a].
+\]
+\item Построить ядерную оценку $\widehat f_{\xi,s}(x)$ по этой выборке.
+\item Посчитать интегральную квадратическую ошибку
+\[
+ISE_s(\xi)
+=
+\int_{-\infty}^{\infty}
+\bigl(\widehat f_{\xi,s}(x)-f(x)\bigr)^2\,dx.
+\]
+\item Нормировать её:
+\[
+ISE_s^*(\xi)
+=
+\frac{ISE_s(\xi)}{\|f\|_2^2}
+=
+2a\,ISE_s(\xi).
+\]
+\end{enumerate}
+
+После $N_{MC}$ независимых повторов получаем оценку средней ошибки:
+\[
+\widehat{\operatorname{RMISE}}_{MC}(\xi)
+=
+\frac{1}{N_{MC}}\sum_{s=1}^{N_{MC}} ISE_s^*(\xi).
+\]
+Именно эта величина сравнивается с аналитической формулой
+$\operatorname{RMISE}(\xi)$.
+
+\section*{Численная реализация}
+
+Интеграл в $ISE_s(\xi)$ считается численно на равномерной сетке по $x$.
+Так как носитель ядерной оценки шире носителя истинной плотности, сетка
+берётся на отрезке, покрывающем все возможные значения, где оценка может
+быть ненулевой. Интегрирование выполняется методом трапеций.
+
+В расчётах использованы параметры
+\[
+N_{MC}=3000,\qquad
+n\in\{30,100\}.
+\]
+Значения $\xi$ взяты как около оптимума, так и в стороне от него, чтобы
+проверить всю форму кривой RMISE.
+
+\section*{Результаты}
+
+На графиках ниже синяя линия --- аналитическая формула, а красные точки ---
+оценка методом Монте-Карло. Вертикальные отрезки показывают приближённый
+95\%-й доверительный интервал для среднего значения Монте-Карло.
+
+\begin{figure}[H]
+\centering
+\plotplaceholder[0.82\textwidth]{mc_kernel_rmise_n30.png}
+\caption{Сравнение аналитической RMISE и Монте-Карло при $n=30$.}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\plotplaceholder[0.82\textwidth]{mc_kernel_rmise_n100.png}
+\caption{Сравнение аналитической RMISE и Монте-Карло при $n=100$.}
+\end{figure}
+
+Для количественной проверки рассмотрим относительное отклонение
+\[
+\frac{
+\widehat{\operatorname{RMISE}}_{MC}(\xi)
+-
+\operatorname{RMISE}(\xi)
+}
+{\operatorname{RMISE}(\xi)}.
+\]
+
+\begin{figure}[H]
+\centering
+\plotplaceholder[0.82\textwidth]{mc_relative_error.png}
+\caption{Относительное отклонение оценки Монте-Карло от аналитической формулы.}
+\end{figure}
+
+Отклонения имеют случайный характер и остаются малыми по сравнению с самим
+значением RMISE. Это подтверждает аналитическую формулу, полученную ранее
+для прямоугольного ядра.
+
+\end{document}
